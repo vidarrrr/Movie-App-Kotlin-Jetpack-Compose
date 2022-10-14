@@ -1,15 +1,11 @@
 package com.movie.app.jetpack.ui.screens.details
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +18,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +31,7 @@ import com.movie.app.jetpack.model.MovieModel
 import com.movie.app.jetpack.ui.screens.home.ChipCustom
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
+import java.lang.NumberFormatException
 
 @Composable
 fun MovieDetailsScreen(movieModel: MovieModel) {
@@ -272,6 +270,9 @@ fun CardViewStar(
     metaScore: Int,
     metaScoreReviews: String
 ) {
+    val isClicked = remember {
+        mutableStateOf(false)
+    }
     Card(modifier, shape = RoundedCornerShape(64.dp, 0.dp, 0.dp, 64.dp)) {
         Row(
 
@@ -294,7 +295,12 @@ fun CardViewStar(
                 Text(hundredScore)
             }
             Column(
-                modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
+                modifier = Modifier
+                    .padding(16.dp, 0.dp, 0.dp, 0.dp)
+                    .clickable {
+                        //https://stackoverflow.com/questions/72810692/how-to-call-a-composable-function-in-onclick-event
+                        isClicked.value = true
+                    },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -323,6 +329,90 @@ fun CardViewStar(
                 TextBold("Metascore", 16, false)
                 Text(metaScoreReviews, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            //showRateDialog()
+            if (isClicked.value) {
+                showRateDialog(isClicked)
+                //isClicked.value = false
+            }
         }
     }
+}
+
+//https://stackoverflow.com/questions/68852110/show-custom-alert-dialog-in-jetpack-compose
+@Composable
+fun showRateDialog(isClicked: MutableState<Boolean>) {
+    val openDialog = remember { mutableStateOf(true) }
+    val text = remember { mutableStateOf(TextFieldValue()) }
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = {
+            openDialog.value = false
+            isClicked.value = false
+        },
+        title = {
+            Text("Rate Movie")
+        },
+        text = {
+            Column {
+                TextField(value = text.value, onValueChange = {
+                    text.value = it
+                    /*if (it.text.isNotEmpty() || it.text.isNotBlank()) {
+                        try {
+                            val rate = it.text.toInt()
+                            if (rate < 0 || rate > 5) {
+                                text.value = TextFieldValue("Rate is not in range [0-5]")
+                            } else {
+                                text.value = it
+                            }
+                        } catch (e: NumberFormatException) {
+                            text.value = TextFieldValue("Number Format Error")
+                        }
+                    } else {
+                        text.value = TextFieldValue("Empty or Blank")
+                    }*/
+                })
+                //Text("Rate")
+            }
+        },
+        buttons = {
+            Row(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = {
+                    val textVal = text.value.text
+                    val message:String = if (textVal.isNotEmpty() || textVal.isNotBlank()) {
+                        try {
+                            val rate = textVal.toInt()
+                            if (rate < 0 || rate > 5) {
+                                "Rate is not in range [0-5]"
+                            } else {
+                                textVal
+                            }
+                        } catch (e: NumberFormatException) {
+                            "Number Format Error"
+                        }
+                    } else {
+                        "Empty or Blank"
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    openDialog.value = false
+                    isClicked.value = false
+                }) {
+                    Text("Rate")
+                }
+                Button(
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                    onClick = {
+                    openDialog.value = false
+                    isClicked.value = false
+                }) {
+                    Text("Cancel")
+                }
+            }
+        }
+    )
 }

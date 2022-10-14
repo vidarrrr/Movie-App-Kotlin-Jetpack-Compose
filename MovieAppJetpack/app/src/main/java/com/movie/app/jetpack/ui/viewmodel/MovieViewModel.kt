@@ -23,6 +23,12 @@ class MovieViewModel(
         onError(error.message)
     }
 
+    //if the item is in the adapter list there is a possibility to display the item
+    //there is no search function implemented by title in the api
+    //can fetch and search all data, but what if data is large
+    //but this api is small could be implement with MediatorLiveData with getMovies()
+    //+ getBoxOffice() + getComingSoon()
+    //https://developer.android.com/reference/androidx/lifecycle/MediatorLiveData
     fun getMovies(type:Int) {
         viewModelScope.launch(handler) {
             val response:Response<List<MovieModel>> = when (type) {

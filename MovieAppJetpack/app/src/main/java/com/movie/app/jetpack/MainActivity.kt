@@ -6,16 +6,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +38,9 @@ import com.movie.app.jetpack.ui.theme.MovieAppJetpackTheme
 import com.movie.app.jetpack.ui.viewmodel.MovieViewModel
 import com.movie.app.jetpack.ui.viewmodel.ViewModelFactory
 import com.movie.app.jetpack.ui.viewmodel.model.MovieTypes
+import com.movie.app.jetpack.ui.viewmodel.model.Resource
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,12 +78,24 @@ class MainActivity : ComponentActivity() {
                         val tempList = remember {
                             mutableStateOf(getWatchList(context))
                         }
+                        val navController = rememberNavController()
+                        val coroutineScope = rememberCoroutineScope()
                         ModalDrawer(drawerState = drawerState,
                             gesturesEnabled = mutableIsOpenedDrawer.value,//drawerState.isOpen,
                             drawerContent = {
-                                Drawer(tempList.value)
+                                Drawer(tempList.value,movieViewModel.movieListVal.observeAsState()){ movieModel ->
+                                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                                        Constants.MOVIE_MODEL_KEY,
+                                        movieModel
+                                    )
+                                    //runBlocking -> A MonotonicFrameClock is not available in this CoroutineContext.
+                                    coroutineScope.launch {
+                                        drawerState.close()
+                                    }
+                                    navController.navigate(Navigation.MOVIE_DETAILS.navName)
+                                }
                             }, content = {
-                                val navController = rememberNavController()
+
                                 NavHost(
                                     navController = navController,
                                     startDestination = Navigation.HOME.navName
@@ -144,7 +158,7 @@ class MainActivity : ComponentActivity() {
 
 
     @Composable
-    private fun Drawer(watchList: List<String>) {
+    private fun Drawer(watchList: List<String>, movieModelList:  State<Resource<List<MovieModel>>?>, onMovieClicked:(MovieModel) -> Unit) {
         Column {
             Box(
                 modifier = Modifier
@@ -164,12 +178,45 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+
+
+            val data = getCurrentMovieList(movieModelList.value?.data)
+
+
+            val context = LocalContext.current
+            val toast = Toast.makeText(context, context.getString(R.string.not_found),Toast.LENGTH_SHORT)
             for (item in watchList) {
-                Text(item, modifier = Modifier.padding(16.dp, 12.dp, 0.dp, 12.dp))
+                Text(item, modifier = Modifier
+                    .padding(16.dp, 12.dp, 0.dp, 12.dp)
+                    .clickable {
+                        data?.let {
+                            if (it.isNotEmpty()) {
+                                val movieList = it.filter { movieModel ->
+                                    movieModel.title.equals(item, true)
+                                }
+                                if (movieList.isNotEmpty()) {
+                                    onMovieClicked(movieList.first())
+                                }else{
+                                    toast.show()
+                                }
+                            }else{
+                                toast.show()
+                            }
+                        } ?: run{
+                            toast.show()
+                        }
+                    })
             }
         }
 
 
+    }
+
+    private fun getCurrentMovieList(data: List<MovieModel>?): List<MovieModel>? {
+        data?.let {
+            return it
+        }
+        return null
     }
 
     private fun printMessage(context: Context, message: String?) {
@@ -235,7 +282,7 @@ class MainActivity : ComponentActivity() {
                 "523,211 critic reviews"
             )*/
 
-            Drawer(listOf("a"))
+            //Drawer(listOf("a"),)
 
 
         }

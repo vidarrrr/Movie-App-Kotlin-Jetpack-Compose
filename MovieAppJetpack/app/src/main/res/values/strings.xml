@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Movie App Jetpack</string>
+    <string name="not_found">Not found</string>
 </resources>
