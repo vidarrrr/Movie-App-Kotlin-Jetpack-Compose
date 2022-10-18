@@ -140,11 +140,11 @@ class MainActivity : ComponentActivity() {
 
     private fun getWatchList(context: Context): List<String> {
         val sharedPrefs = SharedPrefs()
-        val index = sharedPrefs.getParamMenuIndex(context)
+        val index = sharedPrefs.getParam<Int>(context,Constants.MENU_INDEX)
         val list = mutableListOf<String>()
         for (value in 0 until index) {
 
-            sharedPrefs.getParamString(
+            sharedPrefs.getParam<String>(
                 context,
                 "${Constants.MENU_ITEM_SUFFIX}${value}"
             )?.let {

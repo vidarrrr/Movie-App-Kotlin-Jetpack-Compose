@@ -39,7 +39,7 @@ fun MovieDetailsScreen(movieModel: MovieModel) {
         mutableStateOf(false)
     }
 
-    isWillWatch.value = SharedPrefs().getParamBoolean(
+    isWillWatch.value = SharedPrefs().getParam(
         LocalContext.current,
         movieModel.title
     )
@@ -114,7 +114,7 @@ fun RowWatchList(movieModel: MovieModel, isWillWatch: MutableState<Boolean>) {
             onClick = {
                 isWillWatch.value = !isWillWatch.value
                 val sharedPrefs = SharedPrefs()
-                sharedPrefs.setParamBoolean(
+                sharedPrefs.setParam(
                     context,
                     movieModel.title,
                     isWillWatch.value
@@ -225,7 +225,7 @@ fun ActorColumn(actorModel: ActorModel) {
 }
 
 private fun removeFromWatchList(context: Context, sharedPrefs: SharedPrefs, title: String) {
-    var index = sharedPrefs.getParamMenuIndex(context)
+    var index = sharedPrefs.getParam<Int>(context,Constants.MENU_INDEX)
     val currentIndex = sharedPrefs.getParamMenuName(
         context,
         title,
@@ -240,23 +240,25 @@ private fun removeFromWatchList(context: Context, sharedPrefs: SharedPrefs, titl
         currentIndex,
         index
     )
-    sharedPrefs.setParamMenuIndex(
+    sharedPrefs.setParam(
         context,
+        Constants.MENU_INDEX,
         --index
     )
 
 }
 
 private fun addToWatchList(context: Context, sharedPrefs: SharedPrefs, title: String) {
-    var index = sharedPrefs.getParamMenuIndex(context)
+    var index = sharedPrefs.getParam<Int>(context,Constants.MENU_INDEX)
     if (index < 0) index = 0
-    sharedPrefs.setParamString(
+    sharedPrefs.setParam(
         context,
         "${Constants.MENU_ITEM_SUFFIX}${index}",
         title
     )
-    sharedPrefs.setParamMenuIndex(
+    sharedPrefs.setParam(
         context,
+        Constants.MENU_INDEX,
         ++index
     )
 

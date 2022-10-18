@@ -7,41 +7,46 @@ import com.movie.app.jetpack.common.Constants
 
 class SharedPrefs {
 
-    fun getParamBoolean(context: Context, param: String): Boolean {
+    inline fun <reified T> getParam(context:Context, param:String):T{
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        return sharedPreferences.getBoolean(param, false)
+        return when(T::class){
+            String::class -> {
+                sharedPreferences.getString(param,"") as T
+            }
+            Boolean::class ->{
+                sharedPreferences.getBoolean(param,false) as T
+            }
+            Int::class ->{
+                sharedPreferences.getInt(param,0) as T
+            }
+            else ->{
+                throw IllegalArgumentException("Undefined type")
+            }
+        }
     }
 
-    fun setParamBoolean(context: Context, param: String, value: Boolean) {
+    inline fun <reified T> setParam(context: Context, param:String, value:T):Unit{
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit().putBoolean(param, value).apply()
+        when(T::class){
+            String::class -> {
+                sharedPreferences.edit().putString(param,value as String).apply()
+            }
+            Boolean::class -> {
+                sharedPreferences.edit().putBoolean(param,value as Boolean).apply()
+            }
+            Int::class -> {
+                sharedPreferences.edit().putInt(param,value as Int).apply()
+            }
+            else -> {
+                throw IllegalArgumentException("Undefined type")
+            }
+        }
     }
+
 
     fun removeParam(context: Context, param: String) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         sharedPreferences.edit().remove(param).apply()
-    }
-
-    fun getParamString(context: Context, param: String): String? {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        return sharedPreferences.getString(param,"")
-    }
-
-
-    fun setParamString(context: Context, param: String, value: String) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit().putString(param, value).apply()
-    }
-
-    fun getParamMenuIndex(context: Context): Int {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        return sharedPreferences.getInt(Constants.MENU_INDEX,0)
-    }
-
-
-    fun setParamMenuIndex(context: Context, value: Int) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        sharedPreferences.edit().putInt(Constants.MENU_INDEX, value).apply()
     }
 
     fun getParamMenuName(context: Context,name:String, range: Int):Int{
